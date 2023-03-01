@@ -1,7 +1,6 @@
 import os
 import pandas as pd
-import requests
+from src.start import classifier
 
-test_df = pd.read_csv(os.path.join("data", "queries_for_test.csv"), sep="\t")
-print(test_df)
-
+result = classifier.searching("кто может сдавать упрощенный баланс", 6, 0.8)
+print(result)

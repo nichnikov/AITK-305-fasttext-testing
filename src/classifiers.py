@@ -5,10 +5,11 @@ from src.data_types import Parameters
 from src.storage import ElasticClient
 from src.texts_processing import TextsTokenizer
 from src.utils import timeout, jaccard_similarity
+from src.config import logger
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
 
-tmt = float(10)  # timeout
+tmt = float(20)  # timeout
 
 
 class FastAnswerClassifier:
@@ -28,6 +29,7 @@ class FastAnswerClassifier:
             if tokens[0]:
                 tokens_str = " ".join(tokens[0])
                 etalons_search_result = self.es.texts_search(self.prm.clusters_index, "LemCluster", [tokens_str])
+                print(etalons_search_result)
                 if etalons_search_result[0]["search_results"]:
                     for d in etalons_search_result[0]["search_results"]:
                         if pubid in d["ParentPubList"] and jaccard_similarity(tokens_str, d["LemCluster"]) >= score:
@@ -60,7 +62,7 @@ if __name__ == "__main__":
     import os
     import time
     import pandas as pd
-    from src.config import PROJECT_ROOT_DIR, logger
+    from src.config import PROJECT_ROOT_DIR
 
     t = time.time()
     tknzr = TextsTokenizer()

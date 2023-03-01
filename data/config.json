@@ -1,0 +1,7 @@
+{
+  "stopwords_files": [],
+  "clusters_index": "clusters",
+  "answers_index": "answers",
+  "max_hits": 300,
+  "chunk_size": 500
+}
