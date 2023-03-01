@@ -13,6 +13,7 @@ for chat_id, query in zip(test_qrs_df["chat_id"], test_qrs_df["text"]):
     result_ = (chat_id, query) + result
     results.append(result_)
     print(k, "/", len(test_qrs_df))
+    k += 1
 
 
 print(results)
