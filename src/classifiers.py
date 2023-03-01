@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
 
-tmt = float(100)  # timeout
+tmt = float(300)  # timeout
 
 
 class FastAnswerClassifier:
