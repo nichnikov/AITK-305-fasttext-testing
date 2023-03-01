@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
 
-tmt = float(20)  # timeout
+tmt = float(100)  # timeout
 
 
 class FastAnswerClassifier:
@@ -24,7 +24,7 @@ class FastAnswerClassifier:
         self.ft_model = ft_model
 
     @timeout(float(tmt))
-    def searching(self, text: str, pubid: int, score: float):
+    def searching(self, text: str):
         """"""
         """searching etalon by  incoming text"""
         try:
@@ -42,8 +42,6 @@ class FastAnswerClassifier:
                 et_vcs = np.concatenate(et_vcs, axis=0)
                 scores = cosine_similarity(q_vc.reshape(1, 100), et_vcs)[0]
                 sorted_search = sorted(list(zip(ids, ets, lm_ets, scores)), key=lambda x: x[3], reverse=True)
-                print(sorted_search[:10])
-
                 """if etalons_search_result[0]["search_results"]:
                     for d in etalons_search_result[0]["search_results"]:
                         if pubid in d["ParentPubList"] and jaccard_similarity(tokens_str, d["LemCluster"]) >= score:
@@ -64,12 +62,15 @@ class FastAnswerClassifier:
                 else:
                     logger.info("es didn't find anything for text of tokens {}".format(str(tokens_str)))
                     return {"templateId": 0, "templateText": ""}"""
+                return sorted_search[0]
             else:
                 logger.info("tokenizer returned empty value for input text {}".format(str(text)))
-                return {"templateId": 0, "templateText": ""}
+                # return {"templateId": 0, "templateText": ""}
+                return (0, "no", "no", 0)
         except Exception:
             logger.exception("Searching problem with text: {}".format(str(text)))
-            return {"templateId": 0, "templateText": ""}
+            return (0, "no", "no", 0)
+            # return {"templateId": 0, "templateText": ""}
 
 
 if __name__ == "__main__":
