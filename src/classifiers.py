@@ -66,10 +66,10 @@ class FastAnswerClassifier:
             else:
                 logger.info("tokenizer returned empty value for input text {}".format(str(text)))
                 # return {"templateId": 0, "templateText": ""}
-                return (0, "no", "no", 0)
+                return tuple(0, "no", "no", 0)
         except Exception:
             logger.exception("Searching problem with text: {}".format(str(text)))
-            return (0, "no", "no", 0)
+            return tuple(0, "no", "no", 0)
             # return {"templateId": 0, "templateText": ""}
 
 
