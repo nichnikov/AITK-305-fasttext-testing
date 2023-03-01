@@ -4,8 +4,10 @@
 from src.data_types import Parameters
 from src.storage import ElasticClient
 from src.texts_processing import TextsTokenizer
-from src.utils import timeout, jaccard_similarity
+from src.utils import timeout
 from src.config import logger
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
 
@@ -15,10 +17,11 @@ tmt = float(20)  # timeout
 class FastAnswerClassifier:
     """Объект для оперирования MatricesList и TextsStorage"""
 
-    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters):
+    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters, ft_model):
         self.es = ElasticClient()
         self.tkz = tokenizer
         self.prm = parameters
+        self.ft_model = ft_model
 
     @timeout(float(tmt))
     def searching(self, text: str, pubid: int, score: float):
@@ -29,8 +32,19 @@ class FastAnswerClassifier:
             if tokens[0]:
                 tokens_str = " ".join(tokens[0])
                 etalons_search_result = self.es.texts_search(self.prm.clusters_index, "LemCluster", [tokens_str])
-                print(etalons_search_result)
-                if etalons_search_result[0]["search_results"]:
+
+                results_tuples = [(d["ID"], d["Cluster"], d["LemCluster"]) for d in
+                                  etalons_search_result[0]["search_results"]]
+                ids, ets, lm_ets = zip(*results_tuples)
+                q_vc = self.ft_model.get_sentence_vector(tokens_str)
+                et_vcs = [self.ft_model.get_sentence_vector(lm_et) for lm_et in list(lm_ets)]
+                et_vcs = [v.reshape(1, 100) for v in et_vcs]
+                et_vcs = np.concatenate(et_vcs, axis=0)
+                scores = cosine_similarity(q_vc.reshape(1, 100), et_vcs)[0]
+                sorted_search = sorted(list(zip(ids, ets, lm_ets, scores)), key=lambda x: x[3], reverse=True)
+                print(sorted_search[:10])
+
+                """if etalons_search_result[0]["search_results"]:
                     for d in etalons_search_result[0]["search_results"]:
                         if pubid in d["ParentPubList"] and jaccard_similarity(tokens_str, d["LemCluster"]) >= score:
                             answers_search_result = self.es.answer_search(self.prm.answers_index, d["ID"], pubid)
@@ -49,7 +63,7 @@ class FastAnswerClassifier:
                     return {"templateId": 0, "templateText": ""}
                 else:
                     logger.info("es didn't find anything for text of tokens {}".format(str(tokens_str)))
-                    return {"templateId": 0, "templateText": ""}
+                    return {"templateId": 0, "templateText": ""}"""
             else:
                 logger.info("tokenizer returned empty value for input text {}".format(str(text)))
                 return {"templateId": 0, "templateText": ""}
