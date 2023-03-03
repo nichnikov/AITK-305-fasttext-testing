@@ -7,6 +7,7 @@ from src.texts_processing import TextsTokenizer
 from src.utils import timeout, jaccard_similarity
 from src.config import logger
 import numpy as np
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
@@ -17,11 +18,11 @@ tmt = float(300)  # timeout
 class FastAnswerClassifier:
     """Объект для оперирования MatricesList и TextsStorage"""
 
-    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters, ft_model):
+    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters, sbert_model: SentenceTransformer):
         self.es = ElasticClient()
         self.tkz = tokenizer
         self.prm = parameters
-        self.ft_model = ft_model
+        self.sbert_model = sbert_model
 
     @timeout(float(tmt))
     def searching(self, text: str):
@@ -32,14 +33,13 @@ class FastAnswerClassifier:
             if tokens[0]:
                 tokens_str = " ".join(tokens[0])
                 etalons_search_result = self.es.texts_search(self.prm.clusters_index, "LemCluster", [tokens_str])
+
                 results_tuples = [(d["ID"], d["Cluster"], d["LemCluster"]) for d in
-                                  etalons_search_result[0]["search_results"] if 9 in d["ParentPubList"]]
+                                  etalons_search_result[0]["search_results"]]
                 ids, ets, lm_ets = zip(*results_tuples)
-                q_vc = self.ft_model.get_sentence_vector(tokens_str)
-                et_vcs = [self.ft_model.get_sentence_vector(lm_et) for lm_et in list(lm_ets)]
-                et_vcs = [v.reshape(1, 100) for v in et_vcs]
-                et_vcs = np.concatenate(et_vcs, axis=0)
-                scores = cosine_similarity(q_vc.reshape(1, 100), et_vcs)[0]
+                q_vc = self.sbert_model.encode(tokens_str)
+                et_vcs = self.sbert_model.encode(lm_ets)
+                scores = cosine_similarity(q_vc.reshape(1, 768), et_vcs)[0]
                 sorted_search = sorted(list(zip(ids, ets, lm_ets, scores)), key=lambda x: x[3], reverse=True)
                 """if etalons_search_result[0]["search_results"]:
                     for d in etalons_search_result[0]["search_results"]:

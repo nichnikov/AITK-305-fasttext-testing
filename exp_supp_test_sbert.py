@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.start import classifier
+from src.start_sbert import classifier
 
 test_qrs_df = pd.read_csv(os.path.join("data", "queries_for_test.csv"), sep="\t")
 test_qrs_df = test_qrs_df
@@ -19,4 +19,4 @@ for chat_id, query in zip(test_qrs_df["chat_id"], test_qrs_df["text"]):
 print(results)
 results_df = pd.DataFrame(results, columns=["ChatId", "Query", "FastAnswID", "Etalon", "LemEtalon", "FTScore", "JacScore"])
 print(results_df)
-results_df.to_csv(os.path.join("data", "searching_results_230303.csv"), sep="\t", index=False)
+results_df.to_csv(os.path.join("data", "searching_results_sbert.csv"), sep="\t", index=False)
